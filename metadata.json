@@ -1,0 +1,6 @@
+{
+  "name": "Dodo Invoice & Payment Service",
+  "description": "Production-grade asynchronous invoice and payment service built with Python FastAPI, featuring an immutable state machine, idempotent PSP integration, signed webhooks, and PostgreSQL migrations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,22 @@
+[
+  "tests/test_customers.py::test_create_customer_success",
+  "tests/test_customers.py::test_create_customer_unauthorized",
+  "tests/test_customers.py::test_list_customers",
+  "tests/test_idempotency.py::test_idempotency_cached_replay",
+  "tests/test_idempotency.py::test_idempotency_mismatched_payload_rejected",
+  "tests/test_idempotency.py::test_missing_idempotency_key_header_rejected",
+  "tests/test_invoices.py::test_create_invoice_computes_total_in_cents",
+  "tests/test_invoices.py::test_create_invoice_draft_and_finalize",
+  "tests/test_invoices.py::test_filter_invoices_by_state",
+  "tests/test_payments.py::test_pay_card_declined",
+  "tests/test_payments.py::test_pay_insufficient_funds_leaves_invoice_open",
+  "tests/test_payments.py::test_pay_network_error_handled",
+  "tests/test_payments.py::test_pay_success_transitions_to_paid",
+  "tests/test_payments.py::test_pay_timeout_handled_gracefully",
+  "tests/test_state_machine.py::test_assert_can_pay_invariants",
+  "tests/test_state_machine.py::test_terminal_paid_state_immutability",
+  "tests/test_state_machine.py::test_terminal_void_state_immutability",
+  "tests/test_state_machine.py::test_valid_transitions",
+  "tests/test_webhooks.py::test_register_and_list_webhook_endpoints",
+  "tests/test_webhooks.py::test_webhook_hmac_signature_verification"
+]

@@ -1,0 +1,587 @@
+openapi: 3.1.0
+info:
+  title: Dodo Invoicing & Payment Service API
+  version: 1.0.0
+  description: |
+    A minimal, production-grade Invoice & Payment Service built with FastAPI.
+    Supports multi-tenant API key authentication, deterministic customer and invoice management,
+    idempotent payment processing, and event-driven HMAC-SHA256 signed webhooks.
+servers:
+  - url: http://localhost:8000
+    description: Local Docker Compose Environment
+  - url: /
+    description: Current Host
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Register a new business and obtain an API key
+      operationId: registerBusiness
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessRegisterRequest'
+      responses:
+        '201':
+          description: Business created and API key generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessRegisterResponse'
+        '400':
+          $ref: '#/components/responses/StandardError'
+
+  /api/v1/customers:
+    post:
+      summary: Create a customer
+      operationId: createCustomer
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreateRequest'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '401':
+          $ref: '#/components/responses/StandardError'
+        '422':
+          $ref: '#/components/responses/StandardError'
+    get:
+      summary: List customers for the business
+      operationId: listCustomers
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerResponse'
+
+  /api/v1/customers/{customer_id}:
+    get:
+      summary: Get customer by ID
+      operationId: getCustomer
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '404':
+          $ref: '#/components/responses/StandardError'
+
+  /api/v1/invoices:
+    post:
+      summary: Create an invoice with line items
+      description: |
+        Creates an invoice. The server calculates the total from line items.
+        Client-supplied totals are never trusted.
+      operationId: createInvoice
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreateRequest'
+      responses:
+        '201':
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '400':
+          $ref: '#/components/responses/StandardError'
+        '404':
+          $ref: '#/components/responses/StandardError'
+    get:
+      summary: List invoices filterable by state
+      operationId: listInvoices
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [draft, open, paid, void, uncollectible]
+        - name: customer_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvoiceResponse'
+
+  /api/v1/invoices/{invoice_id}:
+    get:
+      summary: Get invoice by ID
+      operationId: getInvoice
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details with line items and payment attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '404':
+          $ref: '#/components/responses/StandardError'
+
+  /api/v1/invoices/{invoice_id}/finalize:
+    post:
+      summary: Finalize draft invoice to open state
+      operationId: finalizeInvoice
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Finalized invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '409':
+          $ref: '#/components/responses/StandardError'
+
+  /api/v1/invoices/{invoice_id}/void:
+    post:
+      summary: Void an invoice
+      operationId: voidInvoice
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Voided invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '409':
+          $ref: '#/components/responses/StandardError'
+
+  /api/v1/invoices/{invoice_id}/pay:
+    post:
+      summary: Attempt payment on an open invoice
+      description: |
+        Processes payment using a mock card token.
+        Guaranteed idempotent via Idempotency-Key header.
+      operationId: payInvoice
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: invoice_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            example: pay_key_9f8e7d6c
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentAttemptRequest'
+      responses:
+        '200':
+          description: Payment succeeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAttemptSuccessResponse'
+        '402':
+          description: Payment failed (insufficient funds, card declined)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAttemptFailedResponse'
+        '409':
+          description: Invalid state transition (e.g. invoice already paid or void)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/StandardError'
+        '504':
+          description: Processor timed out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/StandardError'
+
+  /api/v1/webhooks/endpoints:
+    post:
+      summary: Register a webhook endpoint for the business
+      operationId: registerWebhookEndpoint
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEndpointCreateRequest'
+      responses:
+        '201':
+          description: Webhook endpoint registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEndpointResponse'
+    get:
+      summary: List registered webhook endpoints
+      operationId: listWebhookEndpoints
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookEndpointResponse'
+
+  /mock-psp/charge:
+    post:
+      summary: Mock Payment Processor endpoint
+      description: Deterministically resolves outcomes based on card token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [card_token, amount_cents]
+              properties:
+                card_token:
+                  type: string
+                  example: tok_success
+                amount_cents:
+                  type: integer
+                  example: 10500
+      responses:
+        '200':
+          description: Charge succeeded
+        '400':
+          description: Charge declined or insufficient funds
+        '500':
+          description: Simulated network error
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: APIKey
+      description: API Key prefixed with dodo_live_ or passed as X-API-Key
+
+  responses:
+    StandardError:
+      description: Consistent error envelope
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: INVALID_STATE_TRANSITION
+            message:
+              type: string
+              example: Cannot pay an invoice in terminal state 'paid'
+            details:
+              type: object
+
+    BusinessRegisterRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Acme Corp
+
+    BusinessRegisterResponse:
+      type: object
+      required: [business_id, name, api_key]
+      properties:
+        business_id:
+          type: string
+        name:
+          type: string
+        api_key:
+          type: string
+          description: Raw API key shown only once
+          example: dodo_live_a1b2c3d4e5f60718293a4b5c6d7e8f90
+
+    CustomerCreateRequest:
+      type: object
+      required: [name, email]
+      properties:
+        name:
+          type: string
+          example: Sarah Connor
+        email:
+          type: string
+          format: email
+          example: sarah@cyberdyne.com
+
+    CustomerResponse:
+      type: object
+      required: [id, business_id, name, email, created_at]
+      properties:
+        id:
+          type: string
+        business_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    LineItemCreate:
+      type: object
+      required: [description, quantity, unit_amount_cents]
+      properties:
+        description:
+          type: string
+          example: Enterprise Cloud Hosting
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+        unit_amount_cents:
+          type: integer
+          minimum: 0
+          example: 4500
+
+    LineItemResponse:
+      type: object
+      required: [id, description, quantity, unit_amount_cents, total_amount_cents]
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+        unit_amount_cents:
+          type: integer
+        total_amount_cents:
+          type: integer
+
+    InvoiceCreateRequest:
+      type: object
+      required: [customer_id, due_date, line_items]
+      properties:
+        customer_id:
+          type: string
+        due_date:
+          type: string
+          format: date
+          example: 2026-09-30
+        auto_finalize:
+          type: boolean
+          default: true
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineItemCreate'
+
+    InvoiceResponse:
+      type: object
+      required: [id, business_id, customer_id, state, currency, total_amount_cents, due_date, line_items, created_at]
+      properties:
+        id:
+          type: string
+        business_id:
+          type: string
+        customer_id:
+          type: string
+        state:
+          type: string
+          enum: [draft, open, paid, void, uncollectible]
+        currency:
+          type: string
+          example: USD
+        total_amount_cents:
+          type: integer
+          description: Total computed exclusively in integer cents
+        due_date:
+          type: string
+          format: date
+        line_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineItemResponse'
+        created_at:
+          type: string
+          format: date-time
+
+    PaymentAttemptRequest:
+      type: object
+      required: [card_token]
+      properties:
+        card_token:
+          type: string
+          enum: [tok_success, tok_insufficient_funds, tok_card_declined, tok_timeout, tok_network_error]
+          example: tok_success
+
+    PaymentAttemptSuccessResponse:
+      type: object
+      required: [payment_attempt_id, invoice_id, amount_cents, currency, status, invoice_state, psp_reference]
+      properties:
+        payment_attempt_id:
+          type: string
+        invoice_id:
+          type: string
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+          example: succeeded
+        psp_reference:
+          type: string
+        invoice_state:
+          type: string
+          example: paid
+        failure_code:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    PaymentAttemptFailedResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, payment_attempt_id, invoice_id, failure_code, invoice_state]
+          properties:
+            code:
+              type: string
+              example: PAYMENT_FAILED
+            message:
+              type: string
+            payment_attempt_id:
+              type: string
+            invoice_id:
+              type: string
+            failure_code:
+              type: string
+            invoice_state:
+              type: string
+
+    WebhookEndpointCreateRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://api.merchant.com/webhooks
+
+    WebhookEndpointResponse:
+      type: object
+      required: [id, url, secret, is_active]
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        secret:
+          type: string
+        is_active:
+          type: boolean

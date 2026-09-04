@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dodo_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: dodo_invoices
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dodo_invoices"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dodo_invoice_service
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgrespassword@db:5432/dodo_invoices
+      - PSP_URL=http://mock-psp:8001/charge
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - PSP_TIMEOUT_SECONDS=5.0
+    command: >
+      sh -c "alembic upgrade head &&
+             python3 -m app.seed &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  mock-psp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dodo_mock_psp
+    restart: always
+    ports:
+      - "8001:8001"
+    command: uvicorn app.mock_psp.standalone:app --host 0.0.0.0 --port 8001
+
+volumes:
+  postgres_data:
