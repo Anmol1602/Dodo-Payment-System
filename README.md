@@ -276,9 +276,28 @@ curl -s -X POST http://localhost:8000/api/v1/webhooks/endpoints \
 pytest -v tests/
 ```
 
-Runs 35+ test cases verifying:
-- Integer minor unit arithmetic.
-- State machine transition invariants and terminal state rejection.
-- Idempotency key deduplication.
-- PSP token failure and timeout handling.
-- HMAC-SHA256 signature verification.
+Runs test cases verifying the core requirements:
+1. **Concurrency Invariant Test:** Fires 10 concurrent `POST /pay` requests for the same invoice using `asyncio.gather` and asserts that at most one succeeds (HTTP 200), remaining 9 fail with HTTP 409 Conflict, and zero double charges occur (`test_concurrent_payment_requests_single_success` in `tests/test_payments.py`).
+2. **Idempotency Invariant Test:** Retries the same payment with the same idempotency key and asserts identical cached response replay without a second PSP call (`test_idempotency_cached_replay` in `tests/test_idempotency.py`).
+3. **PSP Failure & Timeout Invariant Tests:** Asserts that `tok_timeout` (504 Gateway Timeout) and `tok_network_error` (502 Bad Gateway) leave the invoice safely in `open` state rather than corrupted or stuck (`test_pay_timeout_handled_gracefully` and `test_pay_network_error_handled` in `tests/test_payments.py`).
+
+---
+
+## Demo Video
+
+**Video Link:** [https://www.loom.com/share/YOUR_DEMO_VIDEO_LINK_HERE](https://www.loom.com/share/YOUR_DEMO_VIDEO_LINK_HERE)  
+*(Replace with your 5–10 minute Loom, Google Drive, Dropbox, or S3 link accessible without login)*
+
+### Video Agenda Breakdown (5 to 10 minutes)
+1. **Architecture Overview (1–2 min):** Walkthrough of the asynchronous FastAPI backend, PostgreSQL 16 database, 3NF schema, integer currency storage (`BIGINT` cents), and the non-blocking event-driven webhook worker.
+2. **Live Demo (2–3 min):** Run `docker compose up` and demonstrate live curl requests:
+   - Create a customer (`POST /api/v1/customers`).
+   - Create and auto-finalize an invoice (`POST /api/v1/invoices`).
+   - Attempt a successful payment (`POST /api/v1/invoices/{id}/pay` with `tok_success`).
+   - Attempt a failing payment (`POST /api/v1/invoices/{id}/pay` with `tok_card_declined`) and demonstrate the invoice remains in `open`.
+   - Inspect signed webhook deliveries (`X-Dodo-Signature`) in database and logs.
+3. **State Machine Walkthrough (1–2 min, unscripted):** Explaining the five invoice states (`draft`, `open`, `paid`, `void`, `uncollectible`), terminal state immutability, and rejection of invalid transitions.
+4. **Failure-Mode Walkthrough (1–2 min, unscripted):** Walking through the exact code in `app/services/payment_service.py` demonstrating:
+   - Concurrency locking with `SELECT ... FOR UPDATE`.
+   - Safe handling of `tok_timeout` and why the attempt remains `pending` while the invoice stays `open` to prevent double charges.
+

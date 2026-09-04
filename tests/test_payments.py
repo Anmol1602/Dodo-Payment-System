@@ -123,3 +123,50 @@ async def test_pay_network_error_handled(client: AsyncClient, auth_headers: dict
     # Invoice remains safely OPEN
     inv_res = await client.get(f"/api/v1/invoices/{invoice_id}", headers=auth_headers)
     assert inv_res.json()["state"] == "open"
+
+
+@pytest.mark.asyncio
+async def test_concurrent_payment_requests_single_success(client: AsyncClient, auth_headers: dict):
+    """
+    Concurrency Invariant Test:
+    Fires N concurrent POST /invoices/{id}/pay requests for the same invoice
+    with different idempotency keys.
+    Asserts:
+      1. At most one request succeeds (HTTP 200).
+      2. Exactly N - 1 requests are rejected with HTTP 409 Conflict.
+      3. Exactly one payment attempt succeeded, zero double-charges occur.
+      4. The final invoice state is locked in 'paid'.
+    """
+    import asyncio
+
+    invoice_id = await _create_test_invoice(client, auth_headers)
+    n_requests = 10
+
+    async def _send_pay(index: int):
+        headers = {**auth_headers, "Idempotency-Key": f"concurrent_key_{index}_{invoice_id}"}
+        return await client.post(
+            f"/api/v1/invoices/{invoice_id}/pay",
+            json={"card_token": "tok_success"},
+            headers=headers
+        )
+
+    responses = await asyncio.gather(*[_send_pay(i) for i in range(n_requests)])
+
+    success_responses = [r for r in responses if r.status_code == 200]
+    conflict_responses = [r for r in responses if r.status_code == 409]
+
+    assert len(success_responses) == 1, f"Expected exactly 1 success, got {len(success_responses)}"
+    assert len(conflict_responses) == n_requests - 1, f"Expected {n_requests - 1} conflicts, got {len(conflict_responses)}"
+
+    # Verify final invoice state is 'paid'
+    inv_res = await client.get(f"/api/v1/invoices/{invoice_id}", headers=auth_headers)
+    assert inv_res.status_code == 200
+    assert inv_res.json()["state"] == "paid"
+
+    # Verify payment attempts list has exactly 1 succeeded attempt
+    attempts_res = await client.get(f"/api/v1/invoices/{invoice_id}/payment-attempts", headers=auth_headers)
+    assert attempts_res.status_code == 200
+    attempts = attempts_res.json()
+    succeeded_attempts = [a for a in attempts if a["status"] == "succeeded"]
+    assert len(succeeded_attempts) == 1, "Zero double-charges: exactly 1 attempt succeeded"
+
