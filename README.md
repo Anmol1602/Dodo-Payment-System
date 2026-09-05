@@ -285,8 +285,14 @@ Runs test cases verifying the core requirements:
 
 ## Demo Video
 
-**Video Link:** [https://www.loom.com/share/YOUR_DEMO_VIDEO_LINK_HERE](https://www.loom.com/share/YOUR_DEMO_VIDEO_LINK_HERE)  
-*(Replace with your 5–10 minute Loom, Google Drive, Dropbox, or S3 link accessible without login)*
+The system walkthrough and live demonstration are recorded in the following Loom videos (accessible without login):
+
+1. **Part 1 — Architecture Overview & Live API Demo:**  
+   🔗 [https://www.loom.com/share/3c9489db896c4fe285aea250c74901f7](https://www.loom.com/share/3c9489db896c4fe285aea250c74901f7)
+2. **Part 2 — Invoice State Machine Walkthrough:**  
+   🔗 [https://www.loom.com/share/7a9a92ffe26f4cc1b7fc6e70c3ac6d77](https://www.loom.com/share/7a9a92ffe26f4cc1b7fc6e70c3ac6d77)
+3. **Part 3 — Failure Mode & Concurrency Deep-Dive:**  
+   🔗 [https://www.loom.com/share/ba378ca76e0040f4bbb27b0343232478](https://www.loom.com/share/ba378ca76e0040f4bbb27b0343232478)
 
 ### Video Agenda Breakdown (5 to 10 minutes)
 1. **Architecture Overview (1–2 min):** Walkthrough of the asynchronous FastAPI backend, PostgreSQL 16 database, 3NF schema, integer currency storage (`BIGINT` cents), and the non-blocking event-driven webhook worker.
