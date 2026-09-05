@@ -20,14 +20,14 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ customers }) => {
         <div>
           <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
             <Users className="w-5 h-5 text-indigo-400" />
-            <span>Customers Registry</span>
+            <span>Customers</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Scoped by tenant Business ID &bull; Relational 3NF integrity with invoices
+            Manage business customers and billing profiles.
           </p>
         </div>
         <div className="px-3 py-1 bg-white/10 rounded-lg text-xs font-mono text-slate-300 border border-white/10">
-          Total: {customers.length} Tenants
+          Total: {customers.length} Customers
         </div>
       </div>
 
@@ -35,11 +35,11 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ customers }) => {
         <table className="w-full text-left border-collapse">
           <thead className="text-[11px] uppercase tracking-widest text-slate-500 border-b border-white/5">
             <tr>
-              <th className="pb-3 font-semibold">Customer Details</th>
+              <th className="pb-3 font-semibold">Customer</th>
               <th className="pb-3 font-semibold">Customer ID</th>
-              <th className="pb-3 font-semibold">Invoices Count</th>
-              <th className="pb-3 font-semibold">Lifetime Volume</th>
-              <th className="pb-3 font-semibold">Joined</th>
+              <th className="pb-3 font-semibold">Invoices</th>
+              <th className="pb-3 font-semibold">Total Paid</th>
+              <th className="pb-3 font-semibold">Created</th>
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-white/5">
@@ -83,8 +83,8 @@ export const CustomersView: React.FC<CustomersViewProps> = ({ customers }) => {
       </div>
 
       <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-slate-500">
-        <div>ON DELETE RESTRICT: ACTIVE ON CUSTOMERS WITH INVOICES</div>
-        <div>PG SCHEMA: 3NF NORMALIZED</div>
+        <div>Registry Status: Active</div>
+        <div>Scope: Tenant Account</div>
       </div>
     </div>
   );

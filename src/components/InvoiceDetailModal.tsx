@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Invoice, PaymentAttempt } from '../types';
-import { X, CheckCircle2, AlertTriangle, Clock, ShieldAlert, KeyRound, Play, RefreshCw } from 'lucide-react';
+import { X, KeyRound, Play, RefreshCw } from 'lucide-react';
 
 interface InvoiceDetailModalProps {
   invoice: Invoice | null;
@@ -97,20 +97,17 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 {formatCents(invoice.totalAmountCents)}
               </div>
               <div className="text-[10px] text-slate-400 font-mono">
-                {invoice.totalAmountCents} integer cents (USD)
+                USD
               </div>
             </div>
           </div>
 
-          {/* Normalized Line Items */}
+          {/* Line Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs uppercase font-semibold tracking-wider text-slate-400">
-                Normalized Line Items (3NF Schema)
+                Line Items
               </h4>
-              <span className="text-[10px] font-mono text-emerald-400">
-                DB-Enforced: total = qty &times; unit_cents
-              </span>
             </div>
             <div className="bg-white/5 rounded-xl border border-white/5 overflow-hidden">
               <table className="w-full text-left text-xs">
@@ -119,7 +116,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                     <th className="p-3">Description</th>
                     <th className="p-3 text-center">Qty</th>
                     <th className="p-3 text-right">Unit Price</th>
-                    <th className="p-3 text-right">Line Total</th>
+                    <th className="p-3 text-right">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -146,18 +143,18 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               <div className="flex items-center gap-2">
                 <Play className="w-4 h-4 text-indigo-400" />
                 <span className="text-xs font-semibold text-white uppercase tracking-wider">
-                  Test Idempotent Payment Flow
+                  Simulate Payment Flow
                 </span>
               </div>
               {isTerminal && (
                 <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded font-mono">
-                  State is Terminal ({invoice.state})
+                  Status: {invoice.state.toUpperCase()}
                 </span>
               )}
             </div>
 
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Select an upstream token to test the state machine transitions and retry logic with mandatory Idempotency-Key.
+              Select a payment test token and submit to simulate invoice processing.
             </p>
 
             {/* Token Selector */}
@@ -165,7 +162,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               {(
                 [
                   { token: 'tok_success', label: 'Success', color: 'emerald' },
-                  { token: 'tok_timeout', label: '5s Timeout', color: 'amber' },
+                  { token: 'tok_timeout', label: 'Timeout', color: 'amber' },
                   { token: 'tok_card_declined', label: 'Declined', color: 'rose' },
                   { token: 'tok_insufficient_funds', label: 'No Funds', color: 'rose' },
                 ] as const
@@ -197,7 +194,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   type="text"
                   value={customKey}
                   onChange={(e) => setCustomKey(e.target.value)}
-                  placeholder="Idempotency-Key HTTP Header"
+                  placeholder="Idempotency-Key"
                   className="w-full bg-slate-900/80 border border-white/15 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-indigo-500"
                 />
               </div>
@@ -215,11 +212,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="text-[10px] text-slate-500 font-mono">
-                Pessimistic lock: SELECT ... FOR UPDATE
-              </div>
-
+            <div className="flex items-center justify-end pt-2">
               <button
                 onClick={handleTriggerPayment}
                 disabled={isTerminal || isProcessing || !customKey.trim()}
@@ -228,12 +221,12 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 {isProcessing ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Processing PSP...</span>
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
                     <Play className="w-3.5 h-3.5 fill-white" />
-                    <span>Post Payment Attempt</span>
+                    <span>Submit Payment</span>
                   </>
                 )}
               </button>
@@ -243,7 +236,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
           {/* Payment Attempts History */}
           <div>
             <h4 className="text-xs uppercase font-semibold tracking-wider text-slate-400 mb-2">
-              Payment Attempt Audit Log
+              Payment Attempts
             </h4>
             {invoice.attempts.length === 0 ? (
               <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-center text-xs text-slate-500 italic">

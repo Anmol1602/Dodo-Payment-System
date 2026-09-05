@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ onNewInvoice }) => {
         <div className="flex items-center">
           <span className="text-xl font-bold tracking-tight text-white">Dodo Payments</span>
           <span className="text-xs font-mono bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded ml-2.5 border border-indigo-500/30">
-            DEV CONSOLE
+            Console
           </span>
         </div>
       </div>
@@ -25,8 +25,8 @@ export const Header: React.FC<HeaderProps> = ({ onNewInvoice }) => {
       <div className="flex items-center flex-wrap gap-4 sm:gap-6">
         <div className="flex items-center gap-2 text-sm">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-slate-400">API Engine:</span>
-          <span className="font-mono text-emerald-400">FastAPI/Async</span>
+          <span className="text-slate-400">API:</span>
+          <span className="font-mono text-emerald-400">Online</span>
         </div>
 
         <div className="px-3.5 py-1.5 bg-white/10 rounded-full border border-white/10 text-xs font-medium flex items-center gap-2">

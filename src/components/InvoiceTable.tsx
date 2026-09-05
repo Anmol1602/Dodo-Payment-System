@@ -34,10 +34,10 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-lg font-semibold text-white tracking-tight">
-            Invoice State Engine Monitoring
+            Invoices
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Strict integer minor units &bull; Idempotent PSP transitions &bull; Pessimistic lock verified
+            Monitor real-time invoices and settlement activity.
           </p>
         </div>
 
@@ -89,12 +89,12 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
         <table className="w-full text-left border-collapse">
           <thead className="text-[11px] uppercase tracking-widest text-slate-500 border-b border-white/5">
             <tr>
-              <th className="pb-3 font-semibold">Invoice ID / Customer</th>
+              <th className="pb-3 font-semibold">Invoice / Customer</th>
               <th className="pb-3 font-semibold">Amount</th>
-              <th className="pb-3 font-semibold">Last Attempt</th>
-              <th className="pb-3 font-semibold">PSP Result</th>
-              <th className="pb-3 font-semibold">State</th>
-              <th className="pb-3 font-semibold text-right">Action</th>
+              <th className="pb-3 font-semibold">Last Token</th>
+              <th className="pb-3 font-semibold">Processor Result</th>
+              <th className="pb-3 font-semibold">Status</th>
+              <th className="pb-3 font-semibold text-right">Details</th>
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-white/5">
@@ -198,38 +198,32 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
 
                   {/* Action link */}
                   <td className="py-4 text-right">
-                    <span className="text-xs text-indigo-400 opacity-80 group-hover:opacity-100 group-hover:underline">
-                      Inspect &rarr;
+                    <span className="text-xs text-indigo-400 opacity-80 group-hover:opacity-100">
+                      View &rarr;
                     </span>
                   </td>
                 </tr>
               );
             })}
-
-            <tr className="group">
-              <td className="py-4 text-slate-500 italic text-xs" colSpan={6}>
-                + 124 additional invoices in current filter...
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
 
-      {/* System Status Footer */}
+      {/* Status Footer */}
       <div className="mt-4 pt-4 border-t border-white/5 flex flex-wrap gap-4 justify-between items-center text-[10px] font-mono text-slate-500">
         <div className="flex flex-wrap gap-4 sm:gap-6">
           <div>
-            POSTGRES: <span className="text-emerald-400 font-semibold">CONNECTED</span>
+            Database: <span className="text-emerald-400 font-semibold">Connected</span>
           </div>
           <div>
-            MOCK PSP: <span className="text-emerald-400 font-semibold">UP</span>
+            Gateway: <span className="text-emerald-400 font-semibold">Online</span>
           </div>
           <div>
-            WEBHOOK WORKER: <span className="text-blue-400 font-semibold">IDLE</span>
+            Worker: <span className="text-blue-400 font-semibold">Active</span>
           </div>
         </div>
         <div>
-          IDEMPOTENCY KEY CHECK: <span className="text-slate-300 font-semibold">ACTIVE</span>
+          Environment: <span className="text-slate-300 font-semibold">Sandbox</span>
         </div>
       </div>
     </div>

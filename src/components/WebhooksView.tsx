@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { WebhookDelivery } from '../types';
-import { Webhook, ShieldCheck, CheckCircle2, RotateCw, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Webhook, ShieldCheck, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface WebhooksViewProps {
   webhooks: WebhookDelivery[];
@@ -15,15 +15,15 @@ export const WebhooksView: React.FC<WebhooksViewProps> = ({ webhooks }) => {
         <div>
           <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
             <Webhook className="w-5 h-5 text-indigo-400" />
-            <span>Webhook Dispatch Worker</span>
+            <span>Webhooks</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Asynchronous non-blocking dispatch &bull; HMAC-SHA256 signature &bull; Exponential backoff retry
+            View real-time event deliveries and payload signatures.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
           <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-          <span className="px-3 py-1 bg-white/10 rounded-lg border border-white/10">Worker Active</span>
+          <span className="px-3 py-1 bg-white/10 rounded-lg border border-white/10">Active</span>
         </div>
       </div>
 
@@ -95,9 +95,8 @@ export const WebhooksView: React.FC<WebhooksViewProps> = ({ webhooks }) => {
                       <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mb-1">
                         <span className="flex items-center gap-1.5 text-indigo-300">
                           <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>X-Dodo-Signature (HMAC-SHA256)</span>
+                          <span>Signature Header</span>
                         </span>
-                        <span className="text-[10px] text-emerald-400">Replay Defense Verified</span>
                       </div>
                       <div className="font-mono text-xs text-slate-300 break-all select-all bg-black/40 p-2 rounded-lg">
                         {wh.signature}
@@ -106,7 +105,7 @@ export const WebhooksView: React.FC<WebhooksViewProps> = ({ webhooks }) => {
 
                     <div>
                       <div className="text-[11px] font-mono text-slate-400 mb-1">
-                        Event Payload:
+                        Payload:
                       </div>
                       <pre className="p-3 bg-black/40 rounded-xl border border-white/5 text-xs font-mono text-emerald-300 overflow-x-auto">
                         {JSON.stringify(wh.payload, null, 2)}
@@ -121,8 +120,8 @@ export const WebhooksView: React.FC<WebhooksViewProps> = ({ webhooks }) => {
       </div>
 
       <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-slate-500">
-        <div>RETRY BACKOFF: EXPONENTIAL (2^attempt * 2s)</div>
-        <div>SIGNING KEY: SHA-256 SECRET</div>
+        <div>Worker: Active</div>
+        <div>Retry Policy: Exponential</div>
       </div>
     </div>
   );

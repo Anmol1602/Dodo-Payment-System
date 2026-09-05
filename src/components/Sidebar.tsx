@@ -1,15 +1,14 @@
 import React from 'react';
-import { FileText, Users, Webhook, Terminal, Info } from 'lucide-react';
+import { FileText, Users, Webhook, Terminal } from 'lucide-react';
 
 export type NavTab = 'invoices' | 'customers' | 'webhooks' | 'logs';
 
 interface SidebarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
-  openAiUsageModal: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab, openAiUsageModal }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => {
   const navItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
     {
       id: 'invoices',
@@ -56,24 +55,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab, openA
         })}
       </nav>
 
-      {/* AI_USAGE disclosure callout */}
-      <div
-        onClick={openAiUsageModal}
-        className="mt-auto p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl hover:bg-amber-500/15 transition-all cursor-pointer group"
-      >
-        <div className="flex items-center gap-2 mb-2">
-          <Info className="w-4 h-4 text-amber-500 shrink-0" />
-          <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">
-            Required: AI_USAGE.md
-          </span>
-        </div>
-        <p className="text-[11px] text-amber-200/70 leading-relaxed italic group-hover:text-amber-200/90 transition-colors">
-          &ldquo;Claude corrected my DB schema normalization for Invoice line items to ensure client-supplied totals are never trusted.&rdquo;
-        </p>
-        <div className="mt-2.5 text-[10px] text-amber-400 font-mono flex items-center justify-between opacity-80 group-hover:opacity-100">
-          <span>View 3 Independent Architectural Decisions</span>
-          <span>&rarr;</span>
-        </div>
+      {/* Account Info */}
+      <div className="mt-auto p-4 bg-white/5 border border-white/10 rounded-2xl">
+        <div className="text-xs font-medium text-white mb-0.5">Dodo Live Tenant</div>
+        <div className="text-[11px] font-mono text-slate-400">biz_dodo_live</div>
       </div>
     </aside>
   );

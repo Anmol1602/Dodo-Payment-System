@@ -20,7 +20,6 @@ import { WebhooksView } from './components/WebhooksView';
 import { LogsView } from './components/LogsView';
 import { InvoiceDetailModal } from './components/InvoiceDetailModal';
 import { CreateInvoiceModal } from './components/CreateInvoiceModal';
-import { AiUsageModal } from './components/AiUsageModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<NavTab>('invoices');
@@ -31,14 +30,12 @@ export default function App() {
 
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [isAiUsageOpen, setIsAiUsageOpen] = useState<boolean>(false);
 
   // Computed metrics
   const totalVolumeCents = invoices
     .filter((inv) => inv.state === 'paid')
     .reduce((sum, inv) => sum + inv.totalAmountCents, 0);
 
-  const totalPaidCount = invoices.filter((inv) => inv.state === 'paid').length;
   const totalAttempts = invoices.reduce((sum, inv) => sum + inv.attempts.length, 0);
   const successRatePercentage =
     totalAttempts > 0
@@ -101,7 +98,7 @@ export default function App() {
           timestamp: now,
           level: 'INFO',
           component: 'STATE_MACHINE',
-          message: `Invoice ${targetInvoice.displayNumber} transitioned ${targetInvoice.state.toUpperCase()} -> PAID. Terminal state locked.`,
+          message: `Invoice ${targetInvoice.displayNumber} transitioned ${targetInvoice.state.toUpperCase()} -> PAID.`,
         },
         ...prev,
       ]);
@@ -141,7 +138,7 @@ export default function App() {
         status: 'pending',
         pspResult: 'Pending',
         failureCode: 'gateway_timeout',
-        failureMessage: 'PSP upstream timed out after 5.0s. Indeterminate status preserved.',
+        failureMessage: 'Payment processor timed out after 5.0s.',
         idempotencyKey,
         createdAt: now,
       };
@@ -154,7 +151,7 @@ export default function App() {
           timestamp: now,
           level: 'WARN',
           component: 'PSP_WORKER',
-          message: `Upstream PSP timeout triggered (5.0s). Attempt recorded as PENDING. Invoice ${targetInvoice.displayNumber} kept OPEN to prevent double billing.`,
+          message: `Upstream PSP timeout (5.0s). Attempt recorded as PENDING. Invoice ${targetInvoice.displayNumber} kept OPEN.`,
         },
         ...prev,
       ]);
@@ -183,7 +180,7 @@ export default function App() {
           timestamp: now,
           level: 'WARN',
           component: 'STATE_MACHINE',
-          message: `Invoice ${targetInvoice.displayNumber} payment attempt failed (${newAttempt.failureCode}). Invoice remains OPEN for customer retry.`,
+          message: `Invoice ${targetInvoice.displayNumber} payment attempt failed (${newAttempt.failureCode}). Invoice remains OPEN.`,
         },
         ...prev,
       ]);
@@ -252,7 +249,7 @@ export default function App() {
         timestamp: now,
         level: 'WARN',
         component: 'STATE_MACHINE',
-        message: `Invoice ${targetInvoice.displayNumber} transitioned to VOID terminal state.`,
+        message: `Invoice ${targetInvoice.displayNumber} transitioned to VOID state.`,
       },
       ...prev,
     ]);
@@ -267,7 +264,7 @@ export default function App() {
         timestamp: new Date().toISOString(),
         level: 'INFO',
         component: 'FASTAPI_CORE',
-        message: `POST /api/v1/invoices HTTP/1.1 201 Created duration=3.8ms [display_id=${newInvoice.displayNumber}]`,
+        message: `POST /api/v1/invoices HTTP/1.1 201 Created [display_id=${newInvoice.displayNumber}]`,
       },
       ...prev,
     ]);
@@ -291,16 +288,15 @@ export default function App() {
         <Sidebar
           currentTab={currentTab}
           onSelectTab={setCurrentTab}
-          openAiUsageModal={() => setIsAiUsageOpen(true)}
         />
 
         {/* Content Section */}
         <section className="col-span-12 lg:col-span-9 flex flex-col gap-6 overflow-hidden">
           {/* Metrics Overview Cards */}
           <MetricsCards
-            totalVolume="$42,105.50"
-            successRate="94.2%"
-            webhookStatus="Retry Active"
+            totalVolume={formatCentsToCurrency(totalVolumeCents || 4210550)}
+            successRate={`${successRatePercentage}%`}
+            webhookStatus="Active"
           />
 
           {/* Tab Views */}
@@ -339,11 +335,6 @@ export default function App() {
         onClose={() => setIsCreateModalOpen(false)}
         customers={customers}
         onCreateInvoice={handleCreateInvoice}
-      />
-
-      <AiUsageModal
-        isOpen={isAiUsageOpen}
-        onClose={() => setIsAiUsageOpen(false)}
       />
     </div>
   );

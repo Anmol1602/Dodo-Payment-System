@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SystemLog } from '../types';
-import { Terminal, Shield, Filter } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 
 interface LogsViewProps {
   logs: SystemLog[];
@@ -21,10 +21,10 @@ export const LogsView: React.FC<LogsViewProps> = ({ logs, onClearLogs }) => {
         <div>
           <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
             <Terminal className="w-5 h-5 text-indigo-400" />
-            <span>FastAPI Async Engine Logs</span>
+            <span>Service Logs</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Non-blocking Uvicorn event loop &bull; Database locks &bull; State validation
+            Real-time activity and API request traces.
           </p>
         </div>
 
@@ -85,8 +85,8 @@ export const LogsView: React.FC<LogsViewProps> = ({ logs, onClearLogs }) => {
       </div>
 
       <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono text-slate-500">
-        <div>STREAM: STDOUT/STDERR CAPTURE</div>
-        <div>WORKERS: 4 ASYNC EVENT LOOPS</div>
+        <div>Stream: Live</div>
+        <div>Status: Active</div>
       </div>
     </div>
   );
