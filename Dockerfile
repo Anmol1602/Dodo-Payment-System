@@ -1,6 +1,7 @@
 FROM python:3.10-slim
 
 WORKDIR /app
+ENV PYTHONPATH=/app
 
 # Install system dependencies for building python libraries and healthchecks
 RUN apt-get update && apt-get install -y --no-install-recommends \
